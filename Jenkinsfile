@@ -10,16 +10,10 @@ pipeline {
             steps {
                 echo '🛠️ Creando entorno virtual...'
                 sh '''
-                    python3 -m venv ${VENV_DIR}
-                    . ${VENV_DIR}/bin/activate
-                    python -m pip install --upgrade pip setuptools wheel
+                    python3 -m venv venv
+                    . venv/bin/activate
                     pip install -r requirements.txt
-                '''
-                
-                echo '📂 Preparando directorios de datos...'
-                sh '''
-                    mkdir -p data
-                    mkdir -p models
+                    mkdir -p data models
                 '''
             }
         }
@@ -28,13 +22,7 @@ pipeline {
             steps {
                 echo '📊 Copiando archivos de datos...'
                 sh '''
-                    cp -r app data/
-                    cp -r tests data/
-                    cp -r src data/
-                    cp -r models data/
-                    cp -r *.py data/
-                    cp -r *.txt data/
-                    cp -r *.csv data/
+                    cp -r data/* data/
                     ls -la data/
                 '''
             }
@@ -44,8 +32,8 @@ pipeline {
             steps {
                 echo '✅ Ejecutando pruebas...'
                 sh '''
-                    . ${VENV_DIR}/bin/activate
-                    python -m pytest tests/test_models.py tests/test_load.py tests/test_model.py -v
+                    . venv/bin/activate
+                    python -m pytest tests/ -v
                 '''
             }
         }
@@ -54,7 +42,7 @@ pipeline {
             steps {
                 echo '📦 Entrenando el modelo...'
                 sh '''
-                    . ${VENV_DIR}/bin/activate
+                    . venv/bin/activate
                     python src/train_model.py
                 '''
             }
