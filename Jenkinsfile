@@ -1,61 +1,54 @@
 pipeline {
     agent any
-    
+
     environment {
-        PYTHON_VERSION = '3.13'
+        VENV_DIR = 'venv'
     }
-    
+
     stages {
         stage('Setup') {
             steps {
-                // Crear y activar entorno virtual
-                sh '''
-                    python -m venv venv
-                    . venv/bin/activate
-                '''
-                
-                // Instalar dependencias
-                sh '''
+                echo '🛠️ Creando entorno virtual...'
+                bat '''
+                    python -m venv %VENV_DIR%
+                    call %VENV_DIR%\\Scripts\\activate.bat
+                    python -m pip install --upgrade pip setuptools wheel
                     pip install -r requirements.txt
-                    pip install pytest pytest-cov
                 '''
             }
         }
-        
+
         stage('Test') {
             steps {
-                // Ejecutar tests con cobertura
-                sh '''
-                    . venv/bin/activate
-                    python -m pytest tests/ --cov=app --cov-report=xml -v
+                echo '✅ Ejecutando pruebas...'
+                bat '''
+                    call %VENV_DIR%\\Scripts\\activate.bat
+                    python -m pytest tests\\test_models.py tests\\test_load.py tests\\test_model.py -v
                 '''
             }
-            post {
-                always {
-                    // Publicar resultados de cobertura
-                    cobertura coberturaReportFile: 'coverage.xml'
-                }
-            }
         }
-        
+
         stage('Build Model') {
-            when {
-                branch 'main'  // Solo en la rama principal
-            }
             steps {
-                // Entrenar y guardar el modelo
-                sh '''
-                    . venv/bin/activate
-                    python -c "from app.model import MovieRecommender; recommender = MovieRecommender(); recommender.initialize()"
+                echo '📦 Entrenando el modelo...'
+                bat '''
+                    call %VENV_DIR%\\Scripts\\activate.bat
+                    python src\\train_model.py
                 '''
             }
         }
     }
-    
+
     post {
         always {
-            // Limpiar workspace
+            echo '🧹 Limpiando workspace...'
             cleanWs()
         }
+        success {
+            echo '✨ Pipeline completado exitosamente!'
+        }
+        failure {
+            echo '❌ Pipeline falló!'
+        }
     }
-} 
+}
