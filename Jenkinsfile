@@ -28,7 +28,13 @@ pipeline {
             steps {
                 echo '📊 Copiando archivos de datos...'
                 sh '''
-                    cp -r ./* data/ || true
+                    cp -r app data/
+                    cp -r tests data/
+                    cp -r src data/
+                    cp -r models data/
+                    cp -r *.py data/
+                    cp -r *.txt data/
+                    cp -r *.csv data/
                     ls -la data/
                 '''
             }
