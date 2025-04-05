@@ -1,0 +1,11 @@
+workflow-aggregator:latest
+git:latest
+docker-workflow:latest
+pipeline-stage-view:latest
+blueocean:latest
+cobertura:latest
+junit:latest
+credentials-binding:latest
+timestamper:latest
+ws-cleanup:latest
+ansicolor:latest 

@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Recomendación de Películas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .metric-card {
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .metric-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #0d6efd;
+        }
+        .movie-card {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            background-color: white;
+        }
+        .movie-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .movie-genre {
+            color: #6c757d;
+            font-size: 14px;
+        }
+        .movie-rating {
+            font-size: 16px;
+            color: #198754;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+        }
+        .error-message {
+            color: #dc3545;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            display: none;
+        }
+        .user-info {
+            background-color: #e7f3fe;
+            border: 1px solid #b6d4fe;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 10px 0;
+            display: none;
+        }
+        .user-info ul {
+            list-style-type: none;
+            padding-left: 0;
+            margin-bottom: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <h1 class="text-center mb-4">Sistema de Recomendación de Películas</h1>
+        
+        <!-- Navegación -->
+        <div class="row mb-4">
+            <div class="col text-center">
+                <button class="btn btn-primary me-2" onclick="showTab('recommendations')">Recomendaciones</button>
+                <button class="btn btn-info" onclick="showTab('evaluation')">Evaluación</button>
+            </div>
+        </div>
+
+        <!-- Formulario -->
+        <div class="row justify-content-center mb-4">
+            <div class="col-md-6">
+                <form id="searchForm" class="d-flex">
+                    <input type="number" class="form-control me-2" id="userId" placeholder="ID de Usuario" required min="1">
+                    <button type="submit" class="btn btn-primary">Obtener Recomendaciones</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Loading -->
+        <div id="loading" class="loading" style="display: none;">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Cargando...</span>
+            </div>
+            <p class="mt-2">Procesando solicitud...</p>
+        </div>
+
+        <!-- Error Message -->
+        <div id="errorMessage" class="error-message"></div>
+
+        <!-- User Info -->
+        <div id="userInfo" class="user-info" style="display: block;">
+            <h5>Rangos de Usuarios para Pruebas</h5>
+            <div class="row">
+                <div class="col-md-6">
+                    <ul class="list-group">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <strong>Rango de IDs:</strong>
+                            <span id="userRange" class="badge bg-primary rounded-pill">-</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <strong>Total de usuarios:</strong>
+                            <span id="totalUsers" class="badge bg-primary rounded-pill">-</span>
+                        </li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <strong>Ejemplos de IDs válidos:</strong>
+                        </div>
+                        <div class="card-body">
+                            <p id="sampleUsers" class="mb-0">-</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contenido de Recomendaciones -->
+        <div id="recommendationsTab">
+            <!-- Recomendaciones -->
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="card-title mb-0">Recomendaciones KNN</h5>
+                        </div>
+                        <div class="card-body" id="knnRecommendations">
+                            <p>No hay recomendaciones disponibles</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="card-title mb-0">Recomendaciones Random Forest</h5>
+                        </div>
+                        <div class="card-body" id="rfRecommendations">
+                            <p>No hay recomendaciones disponibles</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contenido de Evaluación -->
+        <div id="evaluationTab" style="display: none;">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="card-title mb-0">Métricas de Evaluación</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Métrica</th>
+                                <th class="text-center">KNN</th>
+                                <th class="text-center">Random Forest</th>
+                                <th class="text-center">Mejor Modelo</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td title="Error Cuadrático Medio - Menor es mejor">MSE</td>
+                                <td class="text-center" id="knnMSE">-</td>
+                                <td class="text-center" id="rfMSE">-</td>
+                                <td class="text-center fw-bold" id="bestMSE">-</td>
+                            </tr>
+                            <tr>
+                                <td title="Error Absoluto Medio - Menor es mejor">MAE</td>
+                                <td class="text-center" id="knnMAE">-</td>
+                                <td class="text-center" id="rfMAE">-</td>
+                                <td class="text-center fw-bold" id="bestMAE">-</td>
+                            </tr>
+                            <tr>
+                                <td title="Precisión en la predicción - Mayor es mejor">Accuracy</td>
+                                <td class="text-center" id="knnAccuracy">-</td>
+                                <td class="text-center" id="rfAccuracy">-</td>
+                                <td class="text-center fw-bold" id="bestAccuracy">-</td>
+                            </tr>
+                            <tr>
+                                <td title="Precisión en recomendaciones relevantes - Mayor es mejor">Precisión</td>
+                                <td class="text-center" id="knnPrecision">-</td>
+                                <td class="text-center" id="rfPrecision">-</td>
+                                <td class="text-center fw-bold" id="bestPrecision">-</td>
+                            </tr>
+                            <tr>
+                                <td title="Capacidad de encontrar todas las recomendaciones relevantes - Mayor es mejor">Recall</td>
+                                <td class="text-center" id="knnRecall">-</td>
+                                <td class="text-center" id="rfRecall">-</td>
+                                <td class="text-center fw-bold" id="bestRecall">-</td>
+                            </tr>
+                            <tr>
+                                <td title="Media armónica entre Precisión y Recall - Mayor es mejor">F1-Score</td>
+                                <td class="text-center" id="knnF1">-</td>
+                                <td class="text-center" id="rfF1">-</td>
+                                <td class="text-center fw-bold" id="bestF1">-</td>
+                            </tr>
+                            <tr>
+                                <td title="Tiempo promedio para generar recomendaciones - Menor es mejor">Tiempo de Inferencia</td>
+                                <td class="text-center" id="knnTime">-</td>
+                                <td class="text-center" id="rfTime">-</td>
+                                <td class="text-center fw-bold" id="bestTime">-</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html> 
