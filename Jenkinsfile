@@ -9,9 +9,9 @@ pipeline {
         stage('Setup') {
             steps {
                 echo '🛠️ Creando entorno virtual...'
-                bat '''
-                    python -m venv %VENV_DIR%
-                    call %VENV_DIR%\\Scripts\\activate.bat
+                sh '''
+                    python3 -m venv ${VENV_DIR}
+                    . ${VENV_DIR}/bin/activate
                     python -m pip install --upgrade pip setuptools wheel
                     pip install -r requirements.txt
                 '''
@@ -21,9 +21,9 @@ pipeline {
         stage('Test') {
             steps {
                 echo '✅ Ejecutando pruebas...'
-                bat '''
-                    call %VENV_DIR%\\Scripts\\activate.bat
-                    python -m pytest tests\\test_models.py tests\\test_load.py tests\\test_model.py -v
+                sh '''
+                    . ${VENV_DIR}/bin/activate
+                    python -m pytest tests/test_models.py tests/test_load.py tests/test_model.py -v
                 '''
             }
         }
@@ -31,9 +31,9 @@ pipeline {
         stage('Build Model') {
             steps {
                 echo '📦 Entrenando el modelo...'
-                bat '''
-                    call %VENV_DIR%\\Scripts\\activate.bat
-                    python src\\train_model.py
+                sh '''
+                    . ${VENV_DIR}/bin/activate
+                    python src/train_model.py
                 '''
             }
         }
