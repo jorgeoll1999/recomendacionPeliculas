@@ -28,7 +28,7 @@ pipeline {
             steps {
                 echo '📊 Copiando archivos de datos...'
                 sh '''
-                    cp -r data/* data/
+                    cp -r ./* data/ || true
                     ls -la data/
                 '''
             }
