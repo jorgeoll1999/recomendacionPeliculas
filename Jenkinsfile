@@ -15,6 +15,22 @@ pipeline {
                     python -m pip install --upgrade pip setuptools wheel
                     pip install -r requirements.txt
                 '''
+                
+                echo '📂 Preparando directorios de datos...'
+                sh '''
+                    mkdir -p data
+                    mkdir -p models
+                '''
+            }
+        }
+
+        stage('Prepare Data') {
+            steps {
+                echo '📊 Copiando archivos de datos...'
+                sh '''
+                    cp -r data/* data/
+                    ls -la data/
+                '''
             }
         }
 
